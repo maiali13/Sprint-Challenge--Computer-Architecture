@@ -11,13 +11,20 @@ DIV = 0b10100011
 ADD = 0b10100000
 SUB = 0b10100001
 MOD = 0b10100100
-CMP = 0b10100111
+
 
 POP = 0b01000110
 PUSH = 0b01000101
 
 CALL = 0b01010000
 RET = 0b00010001
+
+# SC
+JMP  = 0b01010100
+JEQ  = 0b01010101
+JNE  = 0b01010110
+
+CMP = 0b10100111
 
 # stack pointer reserved in register index 7
 SP = 7
@@ -42,6 +49,7 @@ class CPU:
             DIV: self.div,
             MOD: self.mod,
             CMP: self.cmp,
+            JMP: self.jmp,
                        }
 
         self.reg = bytearray(8)
@@ -103,6 +111,14 @@ class CPU:
     
     def cmp(self, reg_a, reg_b):
         self.alu("CMP", reg_a, reg_b)
+    
+    # SC
+    def jmp(self, reg_num):
+        """
+        Jump to the address stored in the given register
+        """
+        self.PC = self.reg[reg_num] # set the program counter to the address stored in the given register
+        
 
     # memory
     def ram_read(self, address):
@@ -164,7 +180,7 @@ class CPU:
         elif op == "MOD":
             self.reg[reg_a] %= self.reg[reg_b]
         # compare
-        elif op == "CMP": # changes the flag depending on regA & reg B
+        elif op == "CMP": # changes the flag depending on regA & regB
             if self.reg[reg_a] < self.reg[reg_b]:
                 self.FL = 0b00000100 # 4 
             elif self.reg[reg_a] > self.reg[reg_b]:
