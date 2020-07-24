@@ -34,7 +34,7 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-
+        # branch table
         self.branch = {
             HLT: self.hlt,
             LDI: self.ldi,
@@ -54,46 +54,70 @@ class CPU:
             JNE: self.jne
                        }
 
+        # initialize 8 general purpose registers
         self.reg = bytearray(8)
-        self.ram = bytearray(256)
-        self.reg[SP] = 0xF4
+
+        # initialize memory
+        self.ram = bytearray(256) # RAM capacity is 256 bytes
+        self.reg[SP] = 0xF4 # reg 7 = 0xF4 in RAM
 
         # internal registers
-        self.PC = 0
-        self.IR = 0
+        self.PC = 0 # program counter aka pointer
+        self.IR = 0 # instruction reg
 
-        self.MAR = 0
-        self.MDR = 0
+        self.MAR = 0 # memory address reg
+        self.MDR = 0 # memory data reg
         
         self.FL = 0 # equal flag 0b00000000
 
     def hlt(self, reg_num, value):
+        """
+        Halt the CPU (and exit the emulator)
+        """
         sys.exit()
 
     def ldi(self, reg_num, value):
+        """
+        Sets the value of a register to an int
+        """
         self.reg[reg_num] = value
 
     def prn(self, reg_num):
+        """
+        Print to the console the numeric value stored in the given register
+        """
         print(self.reg[reg_num])
 
     # stack
     def pop(self, reg_num):
-        self.reg[reg_num] = self.ram_read(self.reg[SP])
-        self.reg[SP] += 1
+        """
+        Pops the value at the top of the stack into the register
+        """
+        self.reg[reg_num] = self.ram_read(self.reg[SP])  # copy the value at the address pointed to by SP to the given register
+        self.reg[SP] += 1 # increment SP
 
     def push(self, reg_num):
-        self.reg[SP] -= 1
-        self.ram_write(self.reg[reg_num], self.reg[SP])
+        """ 
+        Push the value in the register onto the stack
+        """
+        self.reg[SP] -= 1 # decrement SP
+        self.ram_write(self.reg[reg_num], self.reg[SP]) # copy the value in the given register to the address pointed to by the SP
 
-    # sub
+    # subroutine
     def call(self, reg_num):
-        self.ldi(4, self.PC + 2)
-        self.push(4)
-        self.PC = self.reg[reg_num]
+        """
+        Calls a subroutine at the address stored in the register
+        """
+        self.ldi(4, self.PC + 2) # address of the return aka what allows 
+        self.push(4) # push to stack
+        self.PC = self.reg[reg_num] # PC is set to the address stored in the register
 
     def ret(self):
-        self.pop(4)
-        self.PC = self.reg[4]
+        """
+        Return value from subroutine
+        """
+        self.pop(4) # pop the value from the top of the stack 
+        self.PC = self.reg[4] # store it in the PC
 
     # arithmetic ops
     def add(self, reg_a, reg_b):
@@ -141,10 +165,16 @@ class CPU:
     
     # memory
     def ram_read(self, address):
+        """
+        Read and return the value at the given memory address
+        """
         # print(f'RAM at {self.PC} has the address value {self.ram[address]}. ')
         return self.ram[address]
 
     def ram_write(self, value, address):
+        """
+        Write the given value at the specified memory address
+        """
         # print(f'Value {self.ram[address]} was written to RAM at {self.PC} address {self.ram[address]}. ')
         self.ram[address] = value
 
@@ -152,27 +182,14 @@ class CPU:
         """Load a program into memory."""
         address = 0
 
-        # # For now, we've just hardcoded a program:
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000, # 0
-        #     0b00001000, # 8
-        #     0b01000111, # PRN R0
-        #     0b00000000, # 0
-        #     0b00000001, # HLT
-
-        # for instruction in program:
-        #     self.ram[address] = instruction
-        #     address += 1
-
         # completely move load to cpu.py
+        # sys.argv is a py list, which contains the command-line arguments passed to the script
         if len(sys.argv) != 2:
             print("Usage: ls8.py <filename>")
             sys.exit()
 
         with open(sys.argv[1]) as file:
-            program = [int(line[:line.find('#')].strip(), 2)
+            program = [int(line[:line.find('#')].strip(), 2) # set to base 2 aka binary
                        for line in file
                        if line != '\n' and line[0] != '#']
 
@@ -233,13 +250,13 @@ class CPU:
         """Run the CPU.
         reads memory address and stores result in IR
         """
-        self.IR = self.ram_read(self.PC)
-        op_a = self.ram_read(self.PC + 1)
-        op_b = self.ram_read(self.PC + 2)
+        self.IR = self.ram_read(self.PC) # set IR (increments every loop)
+        op_a = self.ram_read(self.PC + 1) # reg 1
+        op_b = self.ram_read(self.PC + 2) # reg 2
 
         # while cpu is running
         while self.IR != HLT:
-            nums = (self.IR & 0b11000000) >> 6
+            nums = (self.IR & 0b11000000) >> 6 # cpu ops
             pc_set = (self.IR & 0b00010000) >> 4
             try:
                 if nums == 0:
