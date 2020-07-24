@@ -50,6 +50,8 @@ class CPU:
             MOD: self.mod,
             CMP: self.cmp,
             JMP: self.jmp,
+            JEQ: self.jeq,
+            JNE: self.jne
                        }
 
         self.reg = bytearray(8)
@@ -119,7 +121,24 @@ class CPU:
         """
         self.PC = self.reg[reg_num] # set the program counter to the address stored in the given register
         
+    def jeq(self, reg_num):
+        """
+        If equal flag is set (true), jump to the address stored in the given register
+        """
+        if self.FL == 1:
+            self.PC = self.reg[reg_num]
+        else: 
+            self.PC += 2 # continue
 
+    def jne(self, reg_num):
+        """
+        If equal flag is clear (false, 0), jump to the address stored in the given register
+        """
+        if self.FL != 1:
+            self.PC = self.reg[reg_num]
+        else: 
+            self.PC += 2 # continue
+    
     # memory
     def ram_read(self, address):
         # print(f'RAM at {self.PC} has the address value {self.ram[address]}. ')
@@ -180,7 +199,7 @@ class CPU:
         elif op == "MOD":
             self.reg[reg_a] %= self.reg[reg_b]
         # compare
-        elif op == "CMP": # changes the flag depending on regA & regB
+        elif op == "CMP": # changes the flag depending on regA & regB, TODO refactor with bitwise operators
             if self.reg[reg_a] < self.reg[reg_b]:
                 self.FL = 0b00000100 # 4 
             elif self.reg[reg_a] > self.reg[reg_b]:
