@@ -11,7 +11,7 @@ DIV = 0b10100011
 ADD = 0b10100000
 SUB = 0b10100001
 MOD = 0b10100100
-
+CMP = 0b10100111
 
 POP = 0b01000110
 PUSH = 0b01000101
@@ -24,7 +24,13 @@ JMP  = 0b01010100
 JEQ  = 0b01010101
 JNE  = 0b01010110
 
-CMP = 0b10100111
+# stretch
+AND = 0b10101000
+OR = 0b10101010
+XOR = 0b10101011
+NOT = 0b01101001
+SHL = 0b10101100
+SHR = 0b10101101
 
 # stack pointer reserved in register index 7
 SP = 7
@@ -51,9 +57,14 @@ class CPU:
             CMP: self.cmp,
             JMP: self.jmp,
             JEQ: self.jeq,
-            JNE: self.jne
+            JNE: self.jne,
+            AND: self.and_bit,
+            OR: self.or_bit,
+            XOR: self.xor,
+            NOT: self.not_bit,
+            SHL: self.shl,
+            SHR: self.shr
                        }
-
         # initialize 8 general purpose registers
         self.reg = bytearray(8)
 
@@ -137,6 +148,24 @@ class CPU:
     
     def cmp(self, reg_a, reg_b):
         self.alu("CMP", reg_a, reg_b)
+    
+    def and_bit(self, reg_a, reg_b):
+        self.alu("AND", reg_a, reg_b)
+    
+    def or_bit(self, reg_a, reg_b):
+        self.alu("OR", reg_a, reg_b)
+
+    def xor(self, reg_a, reg_b):
+        self.alu("XOR", reg_a, reg_b)
+
+    def not_bit(self, reg_num):
+        self.alu("NOT", reg_num)
+
+    def shl(self, reg_a, reg_b):
+        self.alu('SHL', reg_a, reg_b)
+
+    def shr(self, reg_a, reg_b):
+        self.alu('SHR', reg_a, reg_b)
     
     # SC
     def jmp(self, reg_num):
@@ -223,7 +252,25 @@ class CPU:
                 self.FL = 0b00000010 # 2 
             elif self.reg[reg_a] == self.reg[reg_b]:
                 self.FL = 0b00000001 # 1
-        #  
+        # STRETCH 
+        # bitwise &
+        elif op == "AND": # stores the result in regA
+            self.reg[reg_a] &= self.reg[reg_b]
+        # bitwise or
+        elif op == "OR": # stores the result in regA
+            self.reg[reg_a] |= self.reg[reg_b]
+        # bitwise xor (exclusive or)
+        elif op == "XOR": # stores the result in regA
+            self.reg[reg_a] ^= self.reg[reg_b]
+        # bitwise not
+        elif op == "NOT": # stores the result in the register
+            self.reg[reg_a] = ~self.reg[reg_a]
+        # bitwise shift left
+        elif op == SHL: # shift the value in regA left by the number of bits specified in regB, fills low bits with 0
+            self.reg[reg_a] = self.reg[reg_a] << reg_b
+        # bitwise shift right
+        elif op == SHR: # shift the value in regA right by the number of bits specified in regB, fills low bits with 0
+            self.reg[reg_a] = self.reg[reg_a] >> reg_b
         else:
             raise Exception("Unsupported ALU operation")
 
