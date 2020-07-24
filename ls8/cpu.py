@@ -11,6 +11,7 @@ DIV = 0b10100011
 ADD = 0b10100000
 SUB = 0b10100001
 MOD = 0b10100100
+CMP = 0b10100111
 
 POP = 0b01000110
 PUSH = 0b01000101
@@ -18,7 +19,7 @@ PUSH = 0b01000101
 CALL = 0b01010000
 RET = 0b00010001
 
-# register num for stack pointer
+# stack pointer reserved in register index 7
 SP = 7
 
 class CPU:
@@ -40,6 +41,7 @@ class CPU:
             MUL: self.mul,
             DIV: self.div,
             MOD: self.mod,
+            CMP: self.cmp,
                        }
 
         self.reg = bytearray(8)
@@ -53,7 +55,7 @@ class CPU:
         self.MAR = 0
         self.MDR = 0
         
-        self.FL = 0
+        self.FL = 0 # equal flag 0b00000000
 
     def hlt(self, reg_num, value):
         sys.exit()
@@ -98,6 +100,9 @@ class CPU:
 
     def mod(self, reg_a, reg_b):
         self.alu("MOD", reg_a, reg_b)
+    
+    def cmp(self, reg_a, reg_b):
+        self.alu("CMP", reg_a, reg_b)
 
     # memory
     def ram_read(self, address):
@@ -158,7 +163,15 @@ class CPU:
         # modulo
         elif op == "MOD":
             self.reg[reg_a] %= self.reg[reg_b]
-
+        # compare
+        elif op == "CMP": # changes the flag depending on regA & reg B
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.FL = 0b00000100 # 4 
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.FL = 0b00000010 # 2 
+            elif self.reg[reg_a] == self.reg[reg_b]:
+                self.FL = 0b00000001 # 1
+        #  
         else:
             raise Exception("Unsupported ALU operation")
 
